@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>TT SKINS WEB ☠️</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#020b06;
+  color:#fff;
+}
+.hidden{display:none}
+
+header{
+  background:#03140b;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+header h1{margin:0;color:#00ff99}
+
+button{
+  background:#00ff99;
+  border:none;
+  padding:8px 14px;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+input,select{
+  width:100%;
+  margin:6px 0;
+  padding:10px;
+  background:#000;
+  border:1px solid #00ff99;
+  color:#00ff99;
+  border-radius:6px;
+}
+
+.card{
+  background:#03140b;
+  margin:10px;
+  padding:10px;
+  border-radius:10px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.card img{
+  width:70px;
+  height:70px;
+  border-radius:14px;
+}
+
+.star{
+  color:gold;
+  font-size:14px;
+}
+
+.category-bar{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:10px;
+}
+
+#toast{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#00ff99;
+  color:#000;
+  padding:10px 18px;
+  border-radius:20px;
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>TT SKINS WEB ☠️</h1>
+  <button onclick="toggleMode()" id="modeBtn">ADMIN</button>
+</header>
+
+<!-- USER -->
+<div id="user">
+  <input id="search" placeholder="Search apps..." oninput="render()">
+
+  <div class="category-bar">
+    <button onclick="setCat('All')">All</button>
+    <button onclick="setCat('Games')">Games</button>
+    <button onclick="setCat('Apps')">Apps</button>
+    <button onclick="setCat('Tools')">Tools</button>
+    <button onclick="setCat('Mods')">Mods</button>
+    <button onclick="setCat('Premium')">Premium</button>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="hidden">
+  <h3 style="padding-left:10px">Admin Panel</h3>
+
+  <input id="name" placeholder="App name (Play Store style)">
+  <input id="icon" placeholder="Icon image URL">
+  <input id="size" placeholder="App size (e.g. 340 MB)">
+  <input id="link" placeholder="Download link (optional)">
+  <input type="file" id="apk" accept=".apk">
+
+  <select id="cat">
+    <option>Games</option>
+    <option>Apps</option>
+    <option>Tools</option>
+    <option>Mods</option>
+    <option>Premium</option>
+  </select>
+
+  <select id="rate">
+    <option>5</option><option>4</option><option>3</option>
+    <option>2</option><option>1</option>
+  </select>
+
+  <button onclick="addApp()">ADD APP</button>
+
+  <h3 style="padding-left:10px">Manage Apps</h3>
+  <div id="manage"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let admin=false, cat="All";
+let apps=JSON.parse(localStorage.getItem("TT SKINS WEB ☠️"))||[];
+
+const user=document.getElementById("user");
+const adminBox=document.getElementById("admin");
+const list=document.getElementById("list");
+const manage=document.getElementById("manage");
+const toast=document.getElementById("toast");
+const btn=document.getElementById("modeBtn");
+
+function toastMsg(t){
+  toast.innerText=t;
+  toast.style.display="block";
+  setTimeout(()=>toast.style.display="none",2000);
+}
+
+function toggleMode(){
+  if(!admin){
+    let p=prompt("Enter Admin Password");
+    if(p!=="TT TIGER"){toastMsg("Wrong Password");return;}
+    admin=true;
+    adminBox.classList.remove("hidden");
+    user.classList.add("hidden");
+    btn.innerText="USER";
+  }else{
+    admin=false;
+    adminBox.classList.add("hidden");
+    user.classList.remove("hidden");
+    btn.innerText="ADMIN";
+  }
+}
+
+function setCat(c){cat=c;render();}
+
+function stars(n){
+  return "★".repeat(n)+"☆".repeat(5-n);
+}
+
+function addApp(){
+  let name=nameEl().value||"Unknown App";
+  let icon=iconEl().value||"https://i.imgur.com/8Km9tLL.png";
+  let size=sizeEl().value||"0 MB";
+  let link=linkEl().value;
+  let apk=apkEl().files[0];
+  let c=catEl().value;
+  let r=rateEl().value;
+
+  if(apk) link=URL.createObjectURL(apk);
+  if(!link){toastMsg("APK or Link required");return;}
+
+  apps.push({name,icon,size,link,c,r});
+  save();
+  toastMsg("App Added");
+  render();
+}
+
+function removeApp(i){
+  apps.splice(i,1);
+  save();
+  render();
+}
+
+function save(){
+  localStorage.setItem("hStore",JSON.stringify(apps));
+}
+
+function render(){
+  let q=search.value.toLowerCase();
+  list.innerHTML="";
+  manage.innerHTML="";
+
+  apps.forEach((a,i)=>{
+    if(!a.name.toLowerCase().includes(q))return;
+    if(cat!=="All" && a.c!==cat)return;
+
+    list.innerHTML+=`
+      <div class="card">
+        <img src="${a.icon}">
+        <div>
+          <b>${a.name}</b><br>
+          ${a.size} • ${a.c}<br>
+          <span class="star">${stars(a.r)}</span><br><br>
+          <a href="${a.link}" target="_blank">
+            <button>Download</button>
+          </a>
+        </div>
+      </div>`;
+
+    manage.innerHTML+=`
+      <div class="card">
+        <b>${a.name}</b>
+        <button onclick="removeApp(${i})">Delete</button>
+      </div>`;
+  });
+}
+
+const nameEl=()=>document.getElementById("name");
+const iconEl=()=>document.getElementById("icon");
+const sizeEl=()=>document.getElementById("size");
+const linkEl=()=>document.getElementById("link");
+const apkEl=()=>document.getElementById("apk");
+const catEl=()=>document.getElementById("cat");
+const rateEl=()=>document.getElementById("rate");
+const search=document.getElementById("search");
+
+render();
+</script>
+
+</body>
+</html>
